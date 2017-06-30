@@ -1,8 +1,6 @@
 package sim.app.mtrp.main.agents;
 
-import sim.app.mtrp.main.Depo;
-import sim.app.mtrp.main.MTRP;
-import sim.app.mtrp.main.Task;
+import sim.app.mtrp.main.*;
 import sim.app.mtrp.main.agents.Valuators.Auction;
 import sim.util.Bag;
 
@@ -18,7 +16,54 @@ public class AuctionAgent extends LearningAgent {
 
     @Override
     public Task getAvailableTask() {
-        return getAvailableTask(getNonCommittedTasks());
+
+        Neighborhood chosenNeighborhood = null;
+        double maxUtil = 0.0;
+        for (Neighborhood n : state.getNeighborhoods()) {
+            Bag tasksToConsider = getAvailableTasksWithinRange(n.getTasks());
+            double tasksInRange = (double) tasksToConsider.size();
+            double availableBounty = 0.0;
+            Task[] arrTasks = (Task[]) tasksToConsider.toArray(new Task[tasksToConsider.size()]);
+            for (int i = 0; i < arrTasks.length; i++) {
+                availableBounty += arrTasks[i].getBounty();
+            }
+
+            if (tasksInRange > 0) {
+                double numAgentsInNeighborhood  = 1; // use the agent location preditor to figure this out.
+                double confidence = (1.0 - (n.getTasks().length / n.getMaxTasks())) + 1.0;
+                double totalBounty = n.getBounty(); //+ availableBounty * (1 / (1 + numAgentsInNeighborhood));
+                double util =  ( confidence *  (-getCost(n) + totalBounty+ (getNumTimeStepsFromLocation(n.getLocation()) ) * state.getIncrement())) /  (getNumTimeStepsFromLocation(n.getLocation()));
+                if (util > maxUtil) {
+                    maxUtil = util;
+                    chosenNeighborhood = n;
+                }
+            }
+        }
+        Bag tasksWithinRange = new Bag();
+        if(curJob != null && curJob.getIsAvailable() == true) {
+            tasksWithinRange.add(curJob.getTask());
+        }
+        if (chosenNeighborhood != null) {
+            tasksWithinRange.addAll(getAvailableTasksWithinRange(chosenNeighborhood.getTasks()));
+        }
+
+        Bag nonCommitedTasks = new Bag();
+        for(Object o : tasksWithinRange) {
+            Task t = (Task)o;
+            if (t.getCommittedAgents().size() == 0) {
+                nonCommitedTasks.add(t);
+            }
+        }
+
+        return getAvailableTask(nonCommitedTasks);
+
+
+
+
+
+
+
+        //return getAvailableTask(getNonCommittedTasks());
         //return getAvailableTask(getTasksWithinRange(state.getBondsman().getNewTasks()));
     }
 
@@ -96,6 +141,13 @@ public class AuctionAgent extends LearningAgent {
         return util;
     }
 
+    public double getCost(Neighborhood t) {
+        Depo closestDepo = getClosestDepo(t.getLocation());
+        if (closestDepo == null) {
+            return Double.POSITIVE_INFINITY; // can't get to a depo from here! this is the case if i'm being asked what I'd bid for it.
+        }
+        return getNumTimeStepsFromLocation(t.getLocation()) * closestDepo.getFuelCost();
+    }
 
     public double getCost(Task t) {
         Depo closestDepo = getClosestDepo(t.getLocation());

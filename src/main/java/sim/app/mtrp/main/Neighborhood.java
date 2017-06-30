@@ -45,7 +45,7 @@ public class Neighborhood implements Steppable, BountyTask{
         // then generate the initial tasks locations
         tasks = new ArrayList<Task>();
         timestepsTilNextTask = state.timestepsTilNextTask;
-        maxTasks = 10;
+        maxTasks = state.random.nextInt(10) + 1;
     }
 
 

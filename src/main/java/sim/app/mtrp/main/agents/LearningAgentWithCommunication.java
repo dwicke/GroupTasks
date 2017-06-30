@@ -19,6 +19,14 @@ import sim.util.Double2D;
  *
  * so should it just be like how we pick tasks!
  *
+ * need to learn how many agents are needed to complete the neighborhood.
+ *
+ * need to signal neighborhoods
+ *
+ * we are essentially in the single "neighborhood" setting except the tasks in this single neighborhood
+ * are actually neighborhoods!  So, we need to signal.
+ *
+ *
  * Created by drew on 5/4/17.
  */
 public class LearningAgentWithCommunication extends LearningAgentWithJumpship {
@@ -49,7 +57,7 @@ public class LearningAgentWithCommunication extends LearningAgentWithJumpship {
             if (tasksInRange > 0) {
                 double numAgentsInNeighborhood  = 1; // use the agent location preditor to figure this out.
                 double confidence = (1.0 - (n.getTasks().length / n.getMaxTasks())) + pTable.getQValue(n.getId(), 0);
-                double totalBounty = n.getBounty() + availableBounty * (1 / (1 + numAgentsInNeighborhood));
+                double totalBounty = n.getBounty(); //+ availableBounty * (1 / (1 + numAgentsInNeighborhood));
                 double util =  ( confidence *  (-getCost(n) + totalBounty+ (getNumTimeStepsFromLocation(n.getLocation()) ) * state.getIncrement())) /  (getNumTimeStepsFromLocation(n.getLocation()));
                 if (util > maxUtil) {
                     maxUtil = util;
