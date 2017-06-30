@@ -369,7 +369,7 @@ public abstract class Agent implements Steppable {
         // then I'm at the task!
         amWorking = curJob.claimWork(this);
         jobID = curJob.getId();
-        state.printlnSynchronized("agent id = " + id + " claimed work " + jobID);
+        //state.printlnSynchronized("agent id = " + id + " claimed work " + jobID);
     }
 
 
@@ -379,7 +379,7 @@ public abstract class Agent implements Steppable {
     protected void finishTask() {
         amWorking = false;
         bounty += curJob.getCurrentBounty();
-        state.printlnSynchronized("agent id = " + id +"Finished job = " + curJob.getId() + " and the id i commited to is " + jobID);
+        //state.printlnSynchronized("agent id = " + id +"Finished job = " + curJob.getId() + " and the id i commited to is " + jobID);
         curJob.finish();
         curJob = null;
 

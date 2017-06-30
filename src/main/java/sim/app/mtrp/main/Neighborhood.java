@@ -32,7 +32,7 @@ public class Neighborhood implements Steppable, BountyTask{
     // the task of finishing all of the tasks within the neighborhood
     // this may require the assistance of other agents.
     // this is the amount paid to each of the agents that have been working on it
-    long bounty;
+    long bounty = 100;
 
 
 
@@ -56,7 +56,7 @@ public class Neighborhood implements Steppable, BountyTask{
             numberCompleted++;
             totalTimeWaited += timeWaited;
             timeWaited = 0;
-            bounty = 0;
+            bounty = 100;
             // then we change our mean location
             state.neighborhoodPlane.remove(this);
             meanLocation = new Double2D(state.random.nextDouble(true,true)*state.simWidth, state.random.nextDouble(true,true)*state.simHeight);

@@ -38,10 +38,18 @@ public class LearningAgentWithCommunication extends LearningAgentWithJumpship {
         Neighborhood chosenNeighborhood = null;
         double maxUtil = 0.0;
         for (Neighborhood n : state.getNeighborhoods()) {
-            double tasksInRange = (double) getAvailableTasksWithinRange(n.getTasks()).size();
+            Bag tasksToConsider = getAvailableTasksWithinRange(n.getTasks());
+            double tasksInRange = (double) tasksToConsider.size();
+            double availableBounty = 0.0;
+            Task[] arrTasks = (Task[]) tasksToConsider.toArray(new Task[tasksToConsider.size()]);
+            for (int i = 0; i < arrTasks.length; i++) {
+                availableBounty += arrTasks[i].getBounty();
+            }
+
             if (tasksInRange > 0) {
                 double confidence = (1.0 - (n.getTasks().length / n.getMaxTasks())) + pTable.getQValue(n.getId(), 0);
-                double util =  ( confidence *  (-getCost(n) + n.getBounty()+ (getNumTimeStepsFromLocation(n.getLocation()) ) * state.getIncrement())) /  (getNumTimeStepsFromLocation(n.getLocation()));
+                double totalBounty = n.getBounty() + availableBounty;
+                double util =  ( confidence *  (-getCost(n) + totalBounty+ (getNumTimeStepsFromLocation(n.getLocation()) ) * state.getIncrement())) /  (getNumTimeStepsFromLocation(n.getLocation()));
                 if (util > maxUtil) {
                     maxUtil = util;
                     chosenNeighborhood = n;
