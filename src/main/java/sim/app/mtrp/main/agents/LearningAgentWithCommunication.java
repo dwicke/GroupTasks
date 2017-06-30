@@ -50,13 +50,20 @@ public class LearningAgentWithCommunication extends LearningAgentWithJumpship {
             double tasksInRange = (double) tasksToConsider.size();
             double availableBounty = 0.0;
             Task[] arrTasks = (Task[]) tasksToConsider.toArray(new Task[tasksToConsider.size()]);
-            for (int i = 0; i < arrTasks.length; i++) {
-                availableBounty += arrTasks[i].getBounty();
-            }
+//            for (int i = 0; i < arrTasks.length; i++) {
+//                availableBounty += arrTasks[i].getBounty();
+//            }
 
             if (tasksInRange > 0) {
                 double numAgentsInNeighborhood  = 1; // use the agent location preditor to figure this out.
-                double confidence = (1.0 - (n.getTasks().length / n.getMaxTasks())) + pTable.getQValue(n.getId(), 0);
+                double confidence = 0.0;
+                for (int j = 0; j < arrTasks.length; j++) {
+                    for (int i = 0; i < state.numAgents; i++) {
+                        if (arrTasks[j].getJob().isSignaled(state.getAgents()[i]))
+                            confidence *= agentSuccess.getQValue(i, 0);
+                    }
+                }
+                confidence += (1.0 - (n.getTasks().length / n.getMaxTasks())) + pTable.getQValue(n.getId(), 0);
                 double totalBounty = n.getBounty(); //+ availableBounty * (1 / (1 + numAgentsInNeighborhood));
                 double util =  ( confidence *  (-getCost(n) + totalBounty+ (getNumTimeStepsFromLocation(n.getLocation()) ) * state.getIncrement())) /  (getNumTimeStepsFromLocation(n.getLocation()));
                 if (util > maxUtil) {
