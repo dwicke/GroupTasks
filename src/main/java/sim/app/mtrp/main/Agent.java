@@ -34,6 +34,7 @@ public abstract class Agent implements Steppable {
     double stepsize;
     double originalStepSize = -1;
     boolean slow = false;
+    public int jobID;
 
 
     final Logger logger = (Logger) LoggerFactory.getLogger(Agent.class);
@@ -192,6 +193,28 @@ public abstract class Agent implements Steppable {
         return (Task[]) b.toArray(new Task[b.size()]);
     }
 
+    public Bag getAvailableTasksWithinRange(Task[] tasks) {
+        //Task[] tasks = state.getBondsman().getAvailableTasks();
+        if (tasks.length == 0) {
+            //state.printlnSynchronized("NO TASKS!");
+        }
+        Bag closestWithinRange = new Bag();
+
+        for (Task t : tasks) {
+            if (t.getIsAvailable()) {
+                double dist = getNumTimeStepsFromLocation(t.getLocation());
+                Depo d = getClosestDepo(t.getLocation());
+                if (d != null) {
+                    double distToDepo = getNumTimeStepsFromLocation(d.location, t.getLocation());
+                    if ((dist + distToDepo + fuelEpsilon + 1) < this.curFuel) {
+                        closestWithinRange.add(t);
+                    }
+                }
+            }
+        }
+        return closestWithinRange;
+    }
+
     public Bag getTasksWithinRange(Task[] tasks) {
         //Task[] tasks = state.getBondsman().getAvailableTasks();
         if (tasks.length == 0) {
@@ -345,6 +368,8 @@ public abstract class Agent implements Steppable {
     public void claimWork() {
         // then I'm at the task!
         amWorking = curJob.claimWork(this);
+        jobID = curJob.getId();
+        state.printlnSynchronized("agent id = " + id + " claimed work " + jobID);
     }
 
 
@@ -354,8 +379,12 @@ public abstract class Agent implements Steppable {
     protected void finishTask() {
         amWorking = false;
         bounty += curJob.getCurrentBounty();
+        state.printlnSynchronized("agent id = " + id +"Finished job = " + curJob.getId() + " and the id i commited to is " + jobID);
         curJob.finish();
         curJob = null;
+
+        jobID = -1;
+
     }
 
 

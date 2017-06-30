@@ -10,7 +10,7 @@ import java.util.ArrayList;
 /**
  * Created by drew on 2/20/17.
  */
-public class Neighborhood implements Steppable{
+public class Neighborhood implements Steppable, BountyTask{
     private static final long serialVersionUID = 1;
 
     MTRP state;
@@ -19,11 +19,22 @@ public class Neighborhood implements Steppable{
     Double2D meanLocation;
     ArrayList<Task> tasks;
 
-    int totalTime, count, totalBounty, totalNumTasksGenerated;
+    int totalTime, count, totalBounty, totalNumTasksGenerated, maxTasks;
 
     double timestepsTilNextTask;
 
     Task latestTask = null;
+    long numberCompleted = 0;
+    long timeWaited = 0;
+    long totalTimeWaited = 0;
+
+    // there should be a bounty for actually completeing this task
+    // the task of finishing all of the tasks within the neighborhood
+    // this may require the assistance of other agents.
+    // this is the amount paid to each of the agents that have been working on it
+    long bounty;
+
+
 
     public Neighborhood(MTRP state, int id) {
         this.state = state;
@@ -34,10 +45,28 @@ public class Neighborhood implements Steppable{
         // then generate the initial tasks locations
         tasks = new ArrayList<Task>();
         timestepsTilNextTask = state.timestepsTilNextTask;
+        maxTasks = 10;
     }
 
 
     public void step(SimState simState) {
+
+
+        if (tasks.size() == 0 && timeWaited != 0) {
+            numberCompleted++;
+            totalTimeWaited += timeWaited;
+            timeWaited = 0;
+            bounty = 0;
+            // then we change our mean location
+            state.neighborhoodPlane.remove(this);
+            meanLocation = new Double2D(state.random.nextDouble(true,true)*state.simWidth, state.random.nextDouble(true,true)*state.simHeight);
+            while (state.neighborhoodPlane.getNeighborsWithinDistance(getMeanLocation(), state.meanDistBetweenNeighborhoods).size() != 0) {
+                meanLocation = new Double2D(state.random.nextDouble(true,true)*state.simWidth, state.random.nextDouble(true,true)*state.simHeight);
+            }
+            state.neighborhoodPlane.setObjectLocation(this, this.meanLocation);
+        }
+        bounty++;
+        timeWaited++;
         // here we decide if we create a new task
         generateTasks();
     }
@@ -57,7 +86,7 @@ public class Neighborhood implements Steppable{
 
 
     public void generateTasks() {
-        if (state.random.nextDouble() < (1.0 / getTimestepsTilNextTask())) {
+        if (state.random.nextDouble() < (1.0 / getTimestepsTilNextTask()) && tasks.size() < maxTasks) {
             //if (state.schedule.getSteps() % state.timestepsTilNextTask == 0) {
             makeTask();
         } else {
@@ -150,5 +179,23 @@ public class Neighborhood implements Steppable{
             return new Task[0];
         }
         return tasks.toArray(new Task[tasks.size()]);
+    }
+
+    public long getNumberCompleted() {
+        return numberCompleted;
+    }
+
+    @Override
+    public Double2D getLocation() {
+        return meanLocation;
+    }
+
+    @Override
+    public double getBounty() {
+        return bounty;
+    }
+
+    public int getMaxTasks() {
+        return maxTasks;
     }
 }

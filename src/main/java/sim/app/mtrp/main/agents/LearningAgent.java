@@ -1,9 +1,6 @@
 package sim.app.mtrp.main.agents;
 
-import sim.app.mtrp.main.Agent;
-import sim.app.mtrp.main.Depo;
-import sim.app.mtrp.main.MTRP;
-import sim.app.mtrp.main.Task;
+import sim.app.mtrp.main.*;
 import sim.app.mtrp.main.util.QTable;
 import sim.util.Bag;
 

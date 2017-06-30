@@ -60,16 +60,19 @@ public class LearningAgentWithJumpship extends LearningAgent {
             //jobSuccess[curJob.getTask().getNeighborhood().getId()].update(curJob.getJobType(), 0, 0.5);
         }
 
+        state.printlnSynchronized("agent id = " + id + "cur job = " + curJob.getId() + " the thing i committd to " + jobID);
         if (amWorking == true && curJob.getCurWorker() == null) {
-            state.printlnSynchronized("I am supposedly working but the current worker is null!!!");
+            state.printlnSynchronized("agent id = " + id +"I am supposedly working but the current worker is null!!! " + curJob.getId() + " the thing i committd to " + jobID);
         }
 
         if (amWorking == true && curJob.getCurWorker().getId() == id) {
             curJob.leaveWork(this);
             amWorking = false;
+            jobID = -1;
         }
 
         curJob.getTask().decommit(this);// must decommit.
+
         return bestT;
     }
 }

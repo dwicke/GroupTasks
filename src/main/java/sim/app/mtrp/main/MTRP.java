@@ -666,4 +666,18 @@ public class MTRP extends SimState {
     public void setStepsize(double stepsize) {
         this.stepsize = stepsize;
     }
+
+
+    public double getAverageTimeToNeighborhoodCompletion() {
+        if (bondsman == null) { return 0.0;}
+
+        long totalCompleted = 0;
+        long totalTimeWaited = 0;
+        for (Neighborhood n : neighborhoods) {
+            totalCompleted += n.numberCompleted;
+            totalTimeWaited += n.totalTimeWaited;
+        }
+        return (double) totalTimeWaited / (double) totalCompleted;
+    }
+
 }

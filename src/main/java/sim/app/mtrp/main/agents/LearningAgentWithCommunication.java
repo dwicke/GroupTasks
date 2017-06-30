@@ -1,11 +1,24 @@
 package sim.app.mtrp.main.agents;
 
+import sim.app.mtrp.main.Depo;
 import sim.app.mtrp.main.MTRP;
+import sim.app.mtrp.main.Neighborhood;
 import sim.app.mtrp.main.Task;
 import sim.app.mtrp.main.util.QTable;
+import sim.util.Bag;
 import sim.util.Double2D;
 
 /**
+ * so i just pick the neighborhood and then do signalling since dealing with a single neighborhood
+ * the probability of success should be based on how little effort i have to contribute to complete the task
+ * so basically that is how i can then motivate the agents to move to other neighborhoods.  this is because
+ * i can't really base it on the number of agents within the neighborhood since that will get a lot of ties.
+ *
+ * well i can't base it on the number of tasks i the neighborhood because well then what if the max num tasks
+ * in some neighborhood is more than some other neighborhood then well that wouldn't do now would it
+ *
+ * so should it just be like how we pick tasks!
+ *
  * Created by drew on 5/4/17.
  */
 public class LearningAgentWithCommunication extends LearningAgentWithJumpship {
@@ -18,6 +31,42 @@ public class LearningAgentWithCommunication extends LearningAgentWithJumpship {
 
     }
 
+    @Override
+    public Task getAvailableTask() {
+        //return getAvailableTask(getTasksWithinRange(state.getBondsman().getAvailableTasks()));
+        //return getAvailableTask(getTasksWithinRange(state.getBondsman().getNewTasks()));
+        Neighborhood chosenNeighborhood = null;
+        double maxUtil = 0.0;
+        for (Neighborhood n : state.getNeighborhoods()) {
+            double tasksInRange = (double) getAvailableTasksWithinRange(n.getTasks()).size();
+            if (tasksInRange > 0) {
+                double confidence = (1.0 - (n.getTasks().length / n.getMaxTasks())) + pTable.getQValue(n.getId(), 0);
+                double util =  ( confidence *  (-getCost(n) + n.getBounty()+ (getNumTimeStepsFromLocation(n.getLocation()) ) * state.getIncrement())) /  (getNumTimeStepsFromLocation(n.getLocation()));
+                if (util > maxUtil) {
+                    maxUtil = util;
+                    chosenNeighborhood = n;
+                }
+            }
+        }
+        Bag tasksWithinRange = new Bag();
+        if(curJob != null && curJob.getIsAvailable() == true) {
+            tasksWithinRange.add(curJob.getTask());
+        }
+        if (chosenNeighborhood != null) {
+            tasksWithinRange.addAll(getAvailableTasksWithinRange(chosenNeighborhood.getTasks()));
+        }
+
+        return getAvailableTask(tasksWithinRange);
+
+    }
+    public double getCost(Neighborhood t) {
+        // closest depo will never be null because we only consider tasks that are within distance of a depo
+        Depo closest = getClosestDepo(t.getLocation());
+        if (closest == null) {
+            return Double.POSITIVE_INFINITY;
+        }
+        return getNumTimeStepsFromLocation(t.getLocation()) * closest.getFuelCost();
+    }
 
     @Override
     public void learn(double reward) {
@@ -58,15 +107,15 @@ public class LearningAgentWithCommunication extends LearningAgentWithJumpship {
             // if the agent to task density in the neighborhood is high then we want to coordinate based on signalling?
             // then if it is low then we should
 
-            if (state.numAgents == state.getNeighborhoods().length) {
-                confidence = pTable.getQValue(t.getNeighborhood().getId(), 0);
-            } else if (state.numAgents < state.getNeighborhoods().length) {
-                double weight = Math.max(0, ((double)  state.getNeighborhoods().length - state.numAgents) / (double) state.getNeighborhoods().length);
-                confidence = weight * confidence + (1 - weight) * pTable.getQValue(t.getNeighborhood().getId(), 0);
-            } else if ( state.getNeighborhoods().length > 1) {
-                double weight = Math.max(0, ((double) state.numAgents - state.getNeighborhoods().length) / (double) state.numAgents);
-                confidence = weight * confidence + (1 - weight) * pTable.getQValue(t.getNeighborhood().getId(), 0);
-            }
+//            if (state.numAgents == state.getNeighborhoods().length) {
+//                confidence = pTable.getQValue(t.getNeighborhood().getId(), 0);
+//            } else if (state.numAgents < state.getNeighborhoods().length) {
+//                double weight = Math.max(0, ((double)  state.getNeighborhoods().length - state.numAgents) / (double) state.getNeighborhoods().length);
+//                confidence = weight * confidence + (1 - weight) * pTable.getQValue(t.getNeighborhood().getId(), 0);
+//            } else if ( state.getNeighborhoods().length > 1) {
+//                double weight = Math.max(0, ((double) state.numAgents - state.getNeighborhoods().length) / (double) state.numAgents);
+//                confidence = weight * confidence + (1 - weight) * pTable.getQValue(t.getNeighborhood().getId(), 0);
+//            }
 
             double util =  ( confidence *  (-getCost(t) + t.getBounty()+ (getNumTimeStepsFromLocation(t.getLocation()) + tTable.getQValue(t.getJob().getJobType(), 0)) * state.getIncrement() - 0)) /  (getNumTimeStepsFromLocation(t.getLocation()) + tTable.getQValue(t.getJob().getJobType(), 0));
             //double util =  ( confidence *  (t.getBounty()+ getNumTimeStepsFromLocation(t.getLocation()) - getCost(t))) /  (getNumTimeStepsFromLocation(t.getLocation()) );

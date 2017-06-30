@@ -7,7 +7,7 @@ import sim.util.MutableDouble2D;
 /**
  * Created by drew on 2/20/17.
  */
-public class Task {
+public class Task implements BountyTask{
     private static final long serialVersionUID = 1;
 
     protected static int taskIDGenerator = 0;
