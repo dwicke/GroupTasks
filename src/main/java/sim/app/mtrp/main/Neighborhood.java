@@ -45,7 +45,7 @@ public class Neighborhood implements Steppable, BountyTask{
         // then generate the initial tasks locations
         tasks = new ArrayList<Task>();
         timestepsTilNextTask = state.timestepsTilNextTask;
-        maxTasks = 10;//state.random.nextInt(10) + 1;
+        maxTasks = 2;//state.random.nextInt(10) + 1;
     }
 
 
@@ -56,7 +56,7 @@ public class Neighborhood implements Steppable, BountyTask{
             numberCompleted++;
             totalTimeWaited += timeWaited;
             timeWaited = 0;
-            bounty = 100;
+            bounty = totalTimeWaited / numberCompleted;
             // then we change our mean location
             state.neighborhoodPlane.remove(this);
             meanLocation = new Double2D(state.random.nextDouble(true,true)*state.simWidth, state.random.nextDouble(true,true)*state.simHeight);
@@ -89,6 +89,9 @@ public class Neighborhood implements Steppable, BountyTask{
         if (state.random.nextDouble() < (1.0 / getTimestepsTilNextTask()) && tasks.size() < maxTasks) {
             //if (state.schedule.getSteps() % state.timestepsTilNextTask == 0) {
             makeTask();
+            if (tasks.size() < maxTasks) {
+                makeTask();
+            }
         } else {
             latestTask = null;
         }
@@ -119,6 +122,17 @@ public class Neighborhood implements Steppable, BountyTask{
 
 
         Task genTask = new Task(this, state, new Double2D(x, y));
+
+
+        if (count == 0) {
+            genTask.setBaseBounty(totalTime);
+        } else {
+            double baseBounty = totalTime / count;
+            //state.printlnSynchronized("base bounty in neighborhood " + id + " is = " + (totalTime / count));
+            genTask.setBaseBounty(baseBounty + 15 * state.maxMeanResourcesNeededForType);
+            double inc = Math.abs(baseBounty - state.getBondsman().getTotalAverageTime());
+            genTask.setBountyRate(inc);
+        }
 
         tasks.add(genTask);
         latestTask = genTask;

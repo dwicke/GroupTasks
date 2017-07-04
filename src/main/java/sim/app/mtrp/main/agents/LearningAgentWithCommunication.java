@@ -4,6 +4,7 @@ import sim.app.mtrp.main.Depo;
 import sim.app.mtrp.main.MTRP;
 import sim.app.mtrp.main.Neighborhood;
 import sim.app.mtrp.main.Task;
+import sim.app.mtrp.main.agents.Valuators.AgentLocationPredictor;
 import sim.app.mtrp.main.util.QTable;
 import sim.util.Bag;
 import sim.util.Double2D;
@@ -32,11 +33,12 @@ import sim.util.Double2D;
 public class LearningAgentWithCommunication extends LearningAgentWithJumpship {
 
     QTable agentSuccess;
+    double totalJumpshipDist;
+    int numJumpships = 0;
 
     public LearningAgentWithCommunication(MTRP state, int id) {
         super(state, id);
         agentSuccess = new QTable(state.getNumAgents(), 1, .99, .1, 1.0);
-
     }
 
     @Override
@@ -151,8 +153,13 @@ public class LearningAgentWithCommunication extends LearningAgentWithJumpship {
     @Override
     public boolean travel() {
         boolean hasTraveled = super.travel();
+        double signalDist = 0;//state.getThresholdToSignal();
+        if (numJumpships > 0) {
+            signalDist = totalJumpshipDist / numJumpships;
+            // state.printlnSynchronized(" agent id = " + id + " signal dist = " + signalDist);
+        }
 
-        if (hasTraveled == true && amWorking == false && curJob != null && curJob.getTask().getLocation().distance(this.curLocation) <= state.getThresholdToSignal()) {
+        if (hasTraveled == true && amWorking == false && curJob != null && curJob.getTask().getLocation().distance(this.curLocation) <= signalDist) {
             curJob.signal(this);
         }
         return hasTraveled;
@@ -161,12 +168,11 @@ public class LearningAgentWithCommunication extends LearningAgentWithJumpship {
     @Override
     public Task handleJumpship(Task bestT) {
        // if (curJob.isSignaled(this)) {
+        totalJumpshipDist += getNumTimeStepsFromLocation(curJob.getTask().getLocation(), curLocation);
+        numJumpships++;
 
-            curJob.unsignal(this);
-            //pTable.update(curJob.getTask().getNeighborhood().getId(), 0, 0.0);
-             //pTable.oneUpdate(oneUpdateGamma);
+        curJob.unsignal(this);
 
-        //}
         return super.handleJumpship(bestT);
     }
 }

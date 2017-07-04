@@ -20,6 +20,8 @@ public class Job implements java.io.Serializable  {
     int meanJobLength;
     int countWork = 0;
     boolean slow = false;
+    double bountyRate = 1.0;
+
 
     private Job() {}
 
@@ -207,4 +209,9 @@ public class Job implements java.io.Serializable  {
     public void setSlow(boolean slow) {
         this.slow = slow;
     }
+
+    public void setBountyRate(double bountyRate) {
+        this.bountyRate = bountyRate;
+    }
+
 }
